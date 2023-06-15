@@ -14,8 +14,6 @@
 
 // Execute `rustlings hint hashmaps3` or use the `hint` watch subcommand for a hint.
 
-// I AM NOT DONE
-
 use std::collections::HashMap;
 
 // A structure to store team name and its goal details.
@@ -26,7 +24,6 @@ struct Team {
 }
 
 fn build_scores_table(results: String) -> HashMap<String, Team> {
-    // The name of the team is the key and its associated struct is the value.
     let mut scores: HashMap<String, Team> = HashMap::new();
 
     for r in results.lines() {
@@ -35,12 +32,32 @@ fn build_scores_table(results: String) -> HashMap<String, Team> {
         let team_1_score: u8 = v[2].parse().unwrap();
         let team_2_name = v[1].to_string();
         let team_2_score: u8 = v[3].parse().unwrap();
-        // TODO: Populate the scores table with details extracted from the
-        // current line. Keep in mind that goals scored by team_1
-        // will be the number of goals conceded from team_2, and similarly
-        // goals scored by team_2 will be the number of goals conceded by
-        // team_1.
+
+        if !scores.contains_key(&team_1_name) {
+            scores.insert(team_1_name.clone(), Team {
+                name: team_1_name.clone(),
+                goals_scored: 0,
+                goals_conceded: 0,
+            });
+        }
+
+        if !scores.contains_key(&team_2_name) {
+            scores.insert(team_2_name.clone(), Team {
+                name: team_2_name.clone(),
+                goals_scored: 0,
+                goals_conceded: 0,
+            });
+        }
+
+        let mut team_1 = scores.get_mut(&team_1_name).unwrap();
+        team_1.goals_scored += team_1_score;
+        team_1.goals_conceded += team_2_score;
+        
+        let mut team_2 = scores.get_mut(&team_2_name).unwrap();
+        team_2.goals_scored += team_2_score;
+        team_2.goals_conceded += team_1_score;
     }
+
     scores
 }
 
@@ -49,11 +66,12 @@ mod tests {
     use super::*;
 
     fn get_results() -> String {
-        let results = "".to_string()
-            + "England,France,4,2\n"
-            + "France,Italy,3,1\n"
-            + "Poland,Spain,2,0\n"
-            + "Germany,England,2,1\n";
+        let results =
+            "".to_string() +
+            "England,France,4,2\n" +
+            "France,Italy,3,1\n" +
+            "Poland,Spain,2,0\n" +
+            "Germany,England,2,1\n";
         results
     }
 
@@ -63,10 +81,7 @@ mod tests {
 
         let mut keys: Vec<&String> = scores.keys().collect();
         keys.sort();
-        assert_eq!(
-            keys,
-            vec!["England", "France", "Germany", "Italy", "Poland", "Spain"]
-        );
+        assert_eq!(keys, vec!["England", "France", "Germany", "Italy", "Poland", "Spain"]);
     }
 
     #[test]
