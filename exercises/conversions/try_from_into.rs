@@ -5,7 +5,7 @@
 // You can read more about it at https://doc.rust-lang.org/std/convert/trait.TryFrom.html
 // Execute `rustlings hint try_from_into` or use the `hint` watch subcommand for a hint.
 
-use std::convert::{TryFrom, TryInto};
+use std::convert::{ TryFrom, TryInto };
 
 #[derive(Debug, PartialEq)]
 struct Color {
@@ -23,8 +23,6 @@ enum IntoColorError {
     IntConversion,
 }
 
-// I AM NOT DONE
-
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
 // You need to create an implementation for a tuple of three integers,
@@ -35,42 +33,112 @@ enum IntoColorError {
 // Also note that correct RGB color values must be integers in the 0..=255 range.
 
 // Tuple implementation
-impl TryFrom<(i16, i16, i16)> for Color {
+// impl TryFrom<(i16, i16, i16)> for Color {
+impl<T0, T1, T2> TryFrom<(T0, T1, T2)>
+    for Color
+    where T0: TryInto<u8>, T1: TryInto<u8>, T2: TryInto<u8>
+{
     type Error = IntoColorError;
-    fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+    // fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+    fn try_from(tuple: (T0, T1, T2)) -> Result<Self, Self::Error> {
+        let red = match tuple.0.try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let green = match tuple.1.try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let blue = match tuple.2.try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        Ok(Self { red, green, blue })
     }
 }
 
 // Array implementation
-impl TryFrom<[i16; 3]> for Color {
+// impl TryFrom<[i16; 3]> for Color {
+impl<T> TryFrom<[T; 3]> for Color where T: Copy + TryInto<u8> {
     type Error = IntoColorError;
-    fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+    // fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+    fn try_from(arr: [T; 3]) -> Result<Self, Self::Error> {
+        let red = match arr[0].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let green = match arr[1].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let blue = match arr[2].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        Ok(Self { red, green, blue })
     }
 }
 
 // Slice implementation
-impl TryFrom<&[i16]> for Color {
+// impl TryFrom<&[i16]> for Color {
+impl<T> TryFrom<&[T]> for Color where T: Copy + TryInto<u8> {
     type Error = IntoColorError;
-    fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+    // fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+    fn try_from(slice: &[T]) -> Result<Self, Self::Error> {
+        if slice.len() != 3 {
+            return Err(Self::Error::BadLen);
+        }
+
+        let red = match slice[0].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let green = match slice[1].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        let blue = match slice[2].try_into() {
+            Ok(x) => x,
+            _ => {
+                return Err(Self::Error::IntConversion);
+            }
+        };
+        Ok(Self { red, green, blue })
     }
 }
 
 fn main() {
     // Use the `try_from` function
     let c1 = Color::try_from((183, 65, 14));
-    println!("{:?}", c1);
+    println!("{c1:?}");
 
     // Since TryFrom is implemented for Color, we should be able to use TryInto
     let c2: Result<Color, _> = [183, 65, 14].try_into();
-    println!("{:?}", c2);
+    println!("{c2:?}");
 
     let v = vec![183, 65, 14];
     // With slice we should use `try_from` function
     let c3 = Color::try_from(&v[..]);
-    println!("{:?}", c3);
+    println!("{c3:?}");
     // or take slice within round brackets and use TryInto
     let c4: Result<Color, _> = (&v[..]).try_into();
-    println!("{:?}", c4);
+    println!("{c4:?}");
 }
 
 #[cfg(test)]
@@ -79,37 +147,25 @@ mod tests {
 
     #[test]
     fn test_tuple_out_of_range_positive() {
-        assert_eq!(
-            Color::try_from((256, 1000, 10000)),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from((256, 1000, 10000)), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_tuple_out_of_range_negative() {
-        assert_eq!(
-            Color::try_from((-1, -10, -256)),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from((-1, -10, -256)), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_tuple_sum() {
-        assert_eq!(
-            Color::try_from((-1, 255, 255)),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from((-1, 255, 255)), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_tuple_correct() {
         let c: Result<Color, _> = (183, 65, 14).try_into();
         assert!(c.is_ok());
-        assert_eq!(
-            c.unwrap(),
-            Color {
-                red: 183,
-                green: 65,
-                blue: 14
-            }
-        );
+        assert_eq!(c.unwrap(), Color {
+            red: 183,
+            green: 65,
+            blue: 14,
+        });
     }
     #[test]
     fn test_array_out_of_range_positive() {
@@ -130,52 +186,37 @@ mod tests {
     fn test_array_correct() {
         let c: Result<Color, _> = [183, 65, 14].try_into();
         assert!(c.is_ok());
-        assert_eq!(
-            c.unwrap(),
-            Color {
-                red: 183,
-                green: 65,
-                blue: 14
-            }
-        );
+        assert_eq!(c.unwrap(), Color {
+            red: 183,
+            green: 65,
+            blue: 14,
+        });
     }
     #[test]
     fn test_slice_out_of_range_positive() {
         let arr = [10000, 256, 1000];
-        assert_eq!(
-            Color::try_from(&arr[..]),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from(&arr[..]), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_slice_out_of_range_negative() {
         let arr = [-256, -1, -10];
-        assert_eq!(
-            Color::try_from(&arr[..]),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from(&arr[..]), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_slice_sum() {
         let arr = [-1, 255, 255];
-        assert_eq!(
-            Color::try_from(&arr[..]),
-            Err(IntoColorError::IntConversion)
-        );
+        assert_eq!(Color::try_from(&arr[..]), Err(IntoColorError::IntConversion));
     }
     #[test]
     fn test_slice_correct() {
         let v = vec![183, 65, 14];
         let c: Result<Color, _> = Color::try_from(&v[..]);
         assert!(c.is_ok());
-        assert_eq!(
-            c.unwrap(),
-            Color {
-                red: 183,
-                green: 65,
-                blue: 14
-            }
-        );
+        assert_eq!(c.unwrap(), Color {
+            red: 183,
+            green: 65,
+            blue: 14,
+        });
     }
     #[test]
     fn test_slice_excess_length() {
